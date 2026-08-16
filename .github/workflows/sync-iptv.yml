@@ -26,53 +26,74 @@ jobs:
     - name: Download, fix and merge source files
       id: download
       run: |
-        # 下载两个源文件
+        # 下载三个源文件
         echo "📥 正在下载源文件..."
-        curl -s -L -o migu.m3u "https://raw.githubusercontent.com/ioptu/migu_video/main/migu.m3u"
+        curl -s -L -o migu_1.m3u "https://raw.githubusercontent.com/ioptu/migu_video/main/migu.m3u"
         curl -s -L -o cctv_raw.m3u "https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u"
+        curl -s -L -o migu_3.m3u "https://raw.githubusercontent.com/cyh92/live/main/source/migu.m3u"
         
         # 检查下载是否成功
-        if [ ! -s migu.m3u ]; then
-          echo "❌ 下载 migu.m3u 失败"
+        if [ ! -s migu_1.m3u ]; then
+          echo "❌ 下载 migu_1.m3u 失败"
           exit 1
         fi
         if [ ! -s cctv_raw.m3u ]; then
           echo "❌ 下载 cctv_raw.m3u 失败"
           exit 1
         fi
-        echo "✅ 源文件下载成功"
+        if [ ! -s migu_3.m3u ]; then
+          echo "❌ 下载 migu_3.m3u 失败"
+          exit 1
+        fi
+        echo "✅ 所有源文件下载成功"
+        
+        # 显示源文件头部信息（调试用）
+        echo "📄 源文件头部信息:"
+        echo "  - migu_1.m3u: $(head -1 migu_1.m3u)"
+        echo "  - cctv_raw.m3u: $(head -1 cctv_raw.m3u)"
+        echo "  - migu_3.m3u: $(head -1 migu_3.m3u)"
         
         # 修正 cctv 文件：在每个 #EXTINF 行的 tvg-logo="..." 后面插入 ,group-title="央视专版",
         echo "🔧 正在修正 cctv.migu.m3u 格式..."
         sed -i 's/\(tvg-logo="[^"]*"\)/\1,group-title="央视专版",/' cctv_raw.m3u
         
-        # 合并两个文件
+        # 合并三个文件
         echo "🔗 正在合并文件..."
         echo "#EXTM3U" > new-iptv.m3u
-        # 添加 migu.m3u 内容（去掉可能的头部）
-        tail -n +2 migu.m3u 2>/dev/null | grep -v "^#EXTM3U" >> new-iptv.m3u
+        
+        # 添加 migu_1.m3u 内容（去掉可能的头部）
+        tail -n +2 migu_1.m3u 2>/dev/null | grep -v "^#EXTM3U" >> new-iptv.m3u
         # 添加 cctv_raw.m3u 内容（去掉可能的头部）
         tail -n +2 cctv_raw.m3u 2>/dev/null | grep -v "^#EXTM3U" >> new-iptv.m3u
+        # 添加 migu_3.m3u 内容（去掉可能的头部）
+        tail -n +2 migu_3.m3u 2>/dev/null | grep -v "^#EXTM3U" >> new-iptv.m3u
         
         # 计算哈希和统计信息
         NEW_HASH=$(sha256sum new-iptv.m3u | awk '{print $1}')
         echo "new_hash=$NEW_HASH" >> $GITHUB_OUTPUT
         
-        # 统计频道数量
+        # 统计频道数量（#EXTINF 行数）
         CHANNEL_COUNT=$(grep -c "^#EXTINF" new-iptv.m3u 2>/dev/null || echo "0")
-        SOURCE1_COUNT=$(grep -c "^#EXTINF" migu.m3u 2>/dev/null || echo "0")
+        SOURCE1_COUNT=$(grep -c "^#EXTINF" migu_1.m3u 2>/dev/null || echo "0")
         SOURCE2_COUNT=$(grep -c "^#EXTINF" cctv_raw.m3u 2>/dev/null || echo "0")
+        SOURCE3_COUNT=$(grep -c "^#EXTINF" migu_3.m3u 2>/dev/null || echo "0")
         FILESIZE=$(stat -c%s new-iptv.m3u 2>/dev/null || stat -f%z new-iptv.m3u 2>/dev/null || echo "0")
         
         echo "source1_channels=$SOURCE1_COUNT" >> $GITHUB_OUTPUT
         echo "source2_channels=$SOURCE2_COUNT" >> $GITHUB_OUTPUT
+        echo "source3_channels=$SOURCE3_COUNT" >> $GITHUB_OUTPUT
         echo "total_channels=$CHANNEL_COUNT" >> $GITHUB_OUTPUT
         echo "file_size=$FILESIZE" >> $GITHUB_OUTPUT
         
         echo "📊 文件信息:"
-        echo "  - 源文件1 (migu.m3u): ${SOURCE1_COUNT} 个频道"
-        echo "  - 源文件2 (cctv.migu.m3u): ${SOURCE2_COUNT} 个频道"
+        echo "  - 源文件1 (ioptu/migu.m3u): ${SOURCE1_COUNT} 个频道"
+        echo "  - 源文件2 (ioptu/cctv.migu.m3u): ${SOURCE2_COUNT} 个频道 (已添加 group-title=\"央视专版\")"
+        echo "  - 源文件3 (cyh92/migu.m3u): ${SOURCE3_COUNT} 个频道"
         echo "  - 合并后: ${CHANNEL_COUNT} 个频道, ${FILESIZE} 字节"
+        
+        # 显示合并后文件的头部（调试用）
+        echo "📄 合并后文件头部:"
+        head -5 new-iptv.m3u
     
     - name: Compare files
       id: compare
@@ -97,8 +118,9 @@ jobs:
         git commit -m "🔄 自动同步 IPTV 源
 
         📊 更新信息:
-        - 源文件1 (migu.m3u): ${{ steps.download.outputs.source1_channels }} 个频道
-        - 源文件2 (cctv.migu.m3u): ${{ steps.download.outputs.source2_channels }} 个频道 (已添加 group-title=\"涛哥央视\")
+        - 源文件1 (ioptu/migu.m3u): ${{ steps.download.outputs.source1_channels }} 个频道
+        - 源文件2 (ioptu/cctv.migu.m3u): ${{ steps.download.outputs.source2_channels }} 个频道 (已添加 group-title=\"央视专版\")
+        - 源文件3 (cyh92/migu.m3u): ${{ steps.download.outputs.source3_channels }} 个频道
         - 合并后: ${{ steps.download.outputs.total_channels }} 个频道
         - 文件大小: ${{ steps.download.outputs.file_size }} 字节
         - 新哈希: ${{ steps.download.outputs.new_hash }}
@@ -120,6 +142,8 @@ jobs:
         echo "📁 文件大小: ${{ steps.download.outputs.file_size }} 字节"
         echo "🔑 新哈希: ${{ steps.download.outputs.new_hash }}"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo ""
+        echo "📂 查看文件: https://github.com/${{ github.repository }}/blob/main/iptv-fe.m3u"
     
     - name: Log no changes
       if: steps.compare.outputs.changed == 'false'
