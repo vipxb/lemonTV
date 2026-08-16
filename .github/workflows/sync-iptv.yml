@@ -87,7 +87,7 @@ jobs:
         
         echo "📊 文件信息:"
         echo "  - 源文件1 (ioptu/migu.m3u): ${SOURCE1_COUNT} 个频道"
-        echo "  - 源文件2 (ioptu/cctv.migu.m3u): ${SOURCE2_COUNT} 个频道 (已添加 group-title=\"央视专版\")"
+        echo "  - 源文件2 (ioptu/cctv.migu.m3u): ${SOURCE2_COUNT} 个频道 (已添加 group-title=\"涛哥央视\")"
         echo "  - 源文件3 (cyh92/migu.m3u): ${SOURCE3_COUNT} 个频道"
         echo "  - 合并后: ${CHANNEL_COUNT} 个频道, ${FILESIZE} 字节"
         
