@@ -53,9 +53,11 @@ jobs:
         echo "  - cctv_raw.m3u: $(head -1 cctv_raw.m3u)"
         echo "  - migu_3.m3u: $(head -1 migu_3.m3u)"
         
-        # 修正 cctv 文件：在每个 #EXTINF 行的 tvg-logo="..." 后面插入 ,group-title="涛哥央视",
         echo "🔧 正在修正 cctv.migu.m3u 格式..."
-        sed -i 's/\(tvg-logo="[^"]*"\)/\1,group-title="涛哥央视",/' cctv_raw.m3u
+        sed -i '/^#EXTINF/ {
+          /group-title=/! s/\(tvg-logo="[^"]*"\)/\1,group-title="涛哥央视"/
+          /group-title=/ s/,group-title="[^"]*"/,group-title="涛哥央视"/g
+        }' cctv_raw.m3u
         
         # 合并三个文件
         echo "🔗 正在合并文件..."
