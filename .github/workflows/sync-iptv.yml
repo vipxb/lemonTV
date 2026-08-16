@@ -55,7 +55,7 @@ jobs:
         
         # 修正 cctv 文件：在每个 #EXTINF 行的 tvg-logo="..." 后面插入 ,group-title="涛哥央视",
         echo "🔧 正在修正 cctv.migu.m3u 格式..."
-        sed -i 's/\(tvg-logo="[^"]*"\)/\1,group-title="央视专版",/' cctv_raw.m3u
+        sed -i 's/\(tvg-logo="[^"]*"\)/\1,group-title="涛哥央视",/' cctv_raw.m3u
         
         # 合并三个文件
         echo "🔗 正在合并文件..."
