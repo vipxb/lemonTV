@@ -98,7 +98,7 @@ jobs:
 
         📊 更新信息:
         - 源文件1 (migu.m3u): ${{ steps.download.outputs.source1_channels }} 个频道
-        - 源文件2 (cctv.migu.m3u): ${{ steps.download.outputs.source2_channels }} 个频道 (已添加 group-title=\"央视专版\")
+        - 源文件2 (cctv.migu.m3u): ${{ steps.download.outputs.source2_channels }} 个频道 (已添加 group-title=\"涛哥央视\")
         - 合并后: ${{ steps.download.outputs.total_channels }} 个频道
         - 文件大小: ${{ steps.download.outputs.file_size }} 字节
         - 新哈希: ${{ steps.download.outputs.new_hash }}
